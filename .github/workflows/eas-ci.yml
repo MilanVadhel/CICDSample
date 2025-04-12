@@ -45,6 +45,9 @@ jobs:
             echo "full_build=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: 📥 Install EAS CLI
+        run: npm install -g eas-cli
+
       - name: 🚀 Trigger EAS Build or Update
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
