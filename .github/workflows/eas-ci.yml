@@ -55,9 +55,9 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
             echo "🛠️ Environment: Staging"
             if [ "${{ steps.jscheck.outputs.full_build }}" = "false" ]; then
-              eas update --branch staging --non-interactive
+              eas update --branch preview --non-interactive
             else
-              eas build --platform android --profile staging --non-interactive
+              eas build --platform android --profile preview --non-interactive
             fi
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "🚀 Environment: Production"
