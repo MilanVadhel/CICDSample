@@ -16,11 +16,11 @@ export default function HomeScreen() {
     >
       <Text
         style={{
-          fontSize: 16,
           color: "white",
+          fontSize: 16,
         }}
       >
-        Hello World
+        Milan
       </Text>
     </View>
   );
