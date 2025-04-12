@@ -29,8 +29,8 @@ jobs:
       - name: 🧪 Check if JS-only changes
         id: jscheck
         run: |
-          git fetch origin main
-          FILES=$(git diff --name-only origin/main...HEAD)
+          git fetch origin master
+          FILES=$(git diff --name-only origin/master...HEAD)
           echo "$FILES"
           if echo "$FILES" | grep -vE '\.js$|\.ts$|\.tsx$|\.jsx$|\.json$|\.env'; then
             echo "full_build=true" >> $GITHUB_OUTPUT
