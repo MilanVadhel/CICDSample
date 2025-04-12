@@ -20,7 +20,7 @@ export default function HomeScreen() {
           fontSize: 16,
         }}
       >
-        Hello Milan
+        Hello World
       </Text>
     </View>
   );
