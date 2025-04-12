@@ -1,0 +1,59 @@
+name: Expo EAS CI/CD
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build:
+    name: EAS CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔄 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🟢 Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔐 Authenticate with Expo
+        run: npx expo login -u ${{ secrets.EXPO_USERNAME }} -p ${{ secrets.EXPO_PASSWORD }}
+
+      - name: 🧪 Check if JS-only changes
+        id: jscheck
+        run: |
+          git fetch origin main
+          FILES=$(git diff --name-only origin/main...HEAD)
+          echo "$FILES"
+          if echo "$FILES" | grep -vE '\.js$|\.ts$|\.tsx$|\.jsx$|\.json$|\.env'; then
+            echo "full_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "full_build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🚀 Trigger EAS Build or Update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "🛠️ Environment: Staging"
+            if [ "${{ steps.jscheck.outputs.full_build }}" = "false" ]; then
+              eas update --branch staging --non-interactive
+            else
+              eas build --platform android --profile staging --non-interactive
+            fi
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "🚀 Environment: Production"
+            if [ "${{ steps.jscheck.outputs.full_build }}" = "false" ]; then
+              eas update --branch production --non-interactive
+            else
+              eas build --platform android --profile production --non-interactive
+            fi
+          fi
