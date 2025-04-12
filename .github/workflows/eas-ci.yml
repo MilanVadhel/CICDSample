@@ -41,7 +41,7 @@ jobs:
           git fetch origin
           echo "$BASE_BRANCH"
           FILES=$(git diff --name-only $BASE_BRANCH...HEAD || true)
-          echo "$FILES"
+          echo "Files ------->>>>>> $FILES"
           if echo "$FILES" | grep -vE '\.js$|\.ts$|\.tsx$|\.jsx$|\.json$|\.env'; then
             echo "full_build=true" >> $GITHUB_OUTPUT
           else
@@ -58,8 +58,10 @@ jobs:
           if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
             echo "🛠️ Environment: Staging"
             if [ "${{ steps.jscheck.outputs.full_build }}" = "false" ]; then
+              echo ">>>>>>>> Updating only >>>>>>>>"
               eas update --branch preview --non-interactive
             else
+              echo ">>>>>>>> Building only >>>>>>>>"
               eas build --platform android --profile preview --non-interactive
             fi
           elif [ "${{ github.ref }}" = "refs/heads/master" ]; then
