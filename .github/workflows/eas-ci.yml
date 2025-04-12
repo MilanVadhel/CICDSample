@@ -31,12 +31,15 @@ jobs:
         run: |
           BASE_BRANCH=""
           if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "Head is at develope branch"
             BASE_BRANCH="origin/develop"
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            BASE_BRANCH="origin/main"
+          elif [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            echo "Head is at master branch"
+            BASE_BRANCH="origin/master"
           fi
 
           git fetch origin
+          echo "$BASE_BRANCH"
           FILES=$(git diff --name-only $BASE_BRANCH...HEAD || true)
           echo "$FILES"
           if echo "$FILES" | grep -vE '\.js$|\.ts$|\.tsx$|\.jsx$|\.json$|\.env'; then
@@ -59,7 +62,7 @@ jobs:
             else
               eas build --platform android --profile preview --non-interactive
             fi
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          elif [ "${{ github.ref }}" = "refs/heads/master" ]; then
             echo "🚀 Environment: Production"
             if [ "${{ steps.jscheck.outputs.full_build }}" = "false" ]; then
               eas update --branch production --non-interactive
