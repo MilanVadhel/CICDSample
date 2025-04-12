@@ -32,10 +32,10 @@ jobs:
           BASE_BRANCH=""
           if [ "${{ github.ref }}" = "refs/heads/develop" ]; then
             echo "Head is at develope branch"
-            BASE_BRANCH="origin/develop"
+            BASE_BRANCH="develop"
           elif [ "${{ github.ref }}" = "refs/heads/master" ]; then
             echo "Head is at master branch"
-            BASE_BRANCH="origin/master"
+            BASE_BRANCH="master"
           fi
 
           git fetch origin
