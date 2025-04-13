@@ -1,41 +1,76 @@
-# This config was automatically generated from your source code
-# Stacks detected: cicd:github-actions:.github/workflows,deps:node:.,test:jest:
 version: 2.1
+
 orbs:
   node: circleci/node@5
+
 jobs:
-  test-node:
-    # Install node dependencies and run tests
-    executor: node/default
-    environment:
-      JEST_JUNIT_OUTPUT_DIR: ./test-results/
+  build-and-deploy:
+    docker:
+      - image: cimg/node:18.20.2
+    working_directory: ~/project
     steps:
       - checkout
-      - node/install-packages:
-          pkg-manager: npm
+
       - run:
-          command: npm install jest-junit
+          name: 📦 Install dependencies
+          command: npm ci
+
       - run:
-          name: Run tests
-          command: npm run test --ci --runInBand --reporters=default --reporters=jest-junit
-      - store_test_results:
-          path: ./test-results/
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
+          name: 🔐 Authenticate with Expo
+          command: npx expo login -u $EXPO_USERNAME -p $EXPO_PASSWORD
+
       - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+          name: 🧪 Check if JS-only changes
+          command: |
+            echo 'export BASE_BRANCH=""' >> $BASH_ENV
+            if [ "${CIRCLE_BRANCH}" = "develop" ]; then
+              echo "Head is at develop branch"
+              echo 'export BASE_BRANCH="origin/develop"' >> $BASH_ENV
+            elif [ "${CIRCLE_BRANCH}" = "main" ]; then
+              echo "Head is at main branch"
+              echo 'export BASE_BRANCH="origin/main"' >> $BASH_ENV
+            fi
+            source $BASH_ENV
+            git fetch origin
+            FILES=$(git diff --name-only $BASE_BRANCH...HEAD || true)
+            echo "Files changed: $FILES"
+            if echo "$FILES" | grep -vE '\.js$|\.ts$|\.tsx$|\.jsx$|\.json$|\.env'; then
+              echo 'export FULL_BUILD=true' >> $BASH_ENV
+            else
+              echo 'export FULL_BUILD=false' >> $BASH_ENV
+            fi
+            source $BASH_ENV
+
       - run:
-          name: found github actions config
-          command: ':'
+          name: 📥 Install EAS CLI
+          command: npm install -g eas-cli
+
+      - run:
+          name: 🚀 Trigger EAS Build or Update
+          command: |
+            source $BASH_ENV
+            echo "CIRCLE_BRANCH: ${CIRCLE_BRANCH}"
+            echo "FULL_BUILD: ${FULL_BUILD}"
+
+            if [ "${CIRCLE_BRANCH}" = "develop" ]; then
+              echo "🛠️ Environment: Staging"
+              if [ "$FULL_BUILD" = "false" ]; then
+                echo "Running eas update..."
+                eas update --branch preview --non-interactive --token $EXPO_TOKEN
+              else
+                echo "Running full build..."
+                eas build --platform android --profile preview --non-interactive --token $EXPO_TOKEN
+              fi
+            elif [ "${CIRCLE_BRANCH}" = "main" ]; then
+              echo "🚀 Environment: Production"
+              if [ "$FULL_BUILD" = "false" ]; then
+                eas update --branch production --non-interactive --token $EXPO_TOKEN
+              else
+                eas build --platform android --profile production --non-interactive --token $EXPO_TOKEN
+              fi
+            fi
+
 workflows:
-  build-and-test:
+  build-and-deploy:
     jobs:
-      - test-node
-    # - deploy:
-    #     requires:
-    #       - test-node
+      - build-and-deploy
